@@ -4,10 +4,10 @@ CREATE TABLE users (
     username TEXT NOT NULL UNIQUE,
     email TEXT UNIQUE,
     password_hash TEXT NOT NULL,
-    role TEXT NOT NULL CHECK (role IN ('admin', 'player'))
+    role TEXT NOT NULL CHECK (role IN ('admin', 'player')),
 
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    created TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE rooms (
@@ -19,8 +19,8 @@ CREATE TABLE rooms (
 
     max_players INTEGER NOT NULL CHECK (max_players BETWEEN 3 AND 8),
 
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    created TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE room_members (
@@ -30,8 +30,8 @@ CREATE TABLE room_members (
     role TEXT NOT NULL CHECK (role IN ('player', 'spectator')),
     seat_number INTEGER,
 
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    created TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated TIMESTAMPTZ NOT NULL DEFAULT now(),
 
     PRIMARY KEY (room_id, user_id),
 
@@ -42,7 +42,6 @@ CREATE TABLE room_members (
     )
 );
 
--- Prevent two players from taking the same seat in a room
 CREATE UNIQUE INDEX unique_seat_per_room
 ON room_members (room_id, seat_number)
 WHERE seat_number IS NOT NULL;
@@ -60,6 +59,6 @@ CREATE TABLE games (
     started_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     ended_at TIMESTAMPTZ,
 
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    created TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated TIMESTAMPTZ NOT NULL DEFAULT now()
 );
