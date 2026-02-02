@@ -8,5 +8,13 @@
     "start": "node index.js"
   },
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "body-parser": "^2.2.2",
+    "express": "^5.2.1",
+    "pg": "^8.17.2",
+    "pg-hstore": "^2.3.4",
+    "zod": "^4.3.6"
+  }
 }

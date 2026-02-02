@@ -56,8 +56,8 @@ CREATE TABLE games (
     winner_user_id INTEGER REFERENCES users(id),
     final_state JSONB,
 
-    started_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    ended_at TIMESTAMPTZ,
+    start_time TIMESTAMPTZ NOT NULL DEFAULT now(),
+    end_time TIMESTAMPTZ,
 
     created TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated TIMESTAMPTZ NOT NULL DEFAULT now()
