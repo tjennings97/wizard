@@ -20,7 +20,7 @@ const updateUserSchema = z.object({
   );
 
 const userIdSchema = z.object({
-    id: z.int()
+    id: z.coerce.number().int()
 })
 
 export { createUserSchema, updateUserSchema, userIdSchema }
