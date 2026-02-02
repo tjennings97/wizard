@@ -21,7 +21,7 @@ router.use((req, res, next) => {
 
 // define the root users route
 router.get('/', (req, res) => {
-    pool.query('SELECT * from users')
+    pool.query('SELECT id, username, email, role, created, updated from users')
         .then(usersData => {
             res.send(usersData.rows)
         })
@@ -30,7 +30,7 @@ router.get('/', (req, res) => {
 // TO DO: validate that values for id are only valid values
 router.get('/:id', (req, res) => {
     const { id } = req.params;
-    pool.query(`SELECT * from users where id=${id}`)
+    pool.query(`SELECT id, username, email, role, created, updated from users where id=${id}`)
         .then(userData => {
             res.send(userData.rows)
         })
@@ -83,6 +83,7 @@ router.put('/:id', async (req, res, next) => {
     if(!id_parsed.success){
         return res.status(400).json({error: "invalid id"})
     }
+    console.log(id_parsed)
 
     //check request body schema
     const body_parsed = updateUserSchema.safeParse(req.body);
@@ -92,11 +93,12 @@ router.put('/:id', async (req, res, next) => {
 
     // attempt to update data in DB
     try {
-        const queryData = await updateUserQuery(id_parsed, body_parsed.data);
+        const queryData = await updateUserQuery(id_parsed.data.id, body_parsed.data);
+        console.log(queryData)
 
         const { rows } = await pool.query(queryData[0], queryData[1]);
         if (rows[0]) {
-            res.status(201).json(rows[0]);
+            res.status(204).json(rows[0]);
         } else if (rows[0] === undefined) { // undefined if user not found 
             res.status(404).json({error: "provided ID not found"});
         }

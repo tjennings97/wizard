@@ -34,6 +34,9 @@ async function updateUserQuery(userId, data) {
   // always update the timestamp
   fields.push(`updated = now()`);
 
+  // push the id as the last value
+  values.push(userId)
+
   const query = `UPDATE users SET ${fields.join(", ")} WHERE id = $${idx} RETURNING id, username, email, role, updated;`;
 
   return [query, values];
