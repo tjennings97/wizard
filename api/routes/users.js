@@ -71,7 +71,7 @@ router.get('/:id', async (req, res, next) => {
         
 });
 
-router.post("/", async (req, res, next) => {
+router.post("", async (req, res, next) => {
     const parsed = createUserSchema.safeParse(req.body);
     if (!parsed.success) {
         return res.status(400).json(z.treeifyError(parsed.error));
