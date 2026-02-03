@@ -12,7 +12,7 @@ app.use(express.json());
 // TO DO: enforce auth on each endpoint
 // app.use('/games', games);
 // app.use('/room_members', room_members);
-// app.use('/rooms', rooms);
+app.use('/rooms', rooms);
 app.use('/users', users);
 
 app.use((err, req, res, next) => {
