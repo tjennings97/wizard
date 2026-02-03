@@ -15,6 +15,11 @@ app.use(express.json());
 // app.use('/rooms', rooms);
 app.use('/users', users);
 
+app.use((err, req, res, next) => {
+  console.error(err);
+  res.status(500).json({ error: "Internal server error" });
+});
+
 app.listen(3000, () =>
   console.log('app listening on port 3000!\naccess http://localhost:3000')
 );

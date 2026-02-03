@@ -1,13 +1,13 @@
 import express from 'express';
 const router = express.Router();
 import pool from '../db.js'
-import { 
-    createUserSchema, 
+import {
+    createUserSchema,
     updateUserSchema,
-    userIdSchema 
+    userIdSchema
 } from '../schemas/user_schema.js'
 import bcrypt from 'bcrypt';
-import * as z from "zod"; 
+import * as z from "zod";
 import updateUserQuery from '../helpers/updateUserQuery.js'
 
 // bcrpyt cost factor
@@ -20,30 +20,63 @@ router.use((req, res, next) => {
 });
 
 // define the root users route
-router.get('/', (req, res) => {
-    pool.query('SELECT id, username, email, role, created, updated from users')
-        .then(usersData => {
-            res.send(usersData.rows)
-        })
+router.get('/', async (req, res, next) => {
+
+    try {
+        const result = await pool.query(
+            `
+            SELECT id, username, email, role, created, updated
+            FROM users
+            `
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: "no users found" });
+        }
+
+        return res.status(200).json(result.rows);
+    } catch(err) {
+        return next(err);
+    }
+    
+
 });
 
-// TO DO: validate that values for id are only valid values
-router.get('/:id', (req, res) => {
-    const { id } = req.params;
-    pool.query(`SELECT id, username, email, role, created, updated from users where id=${id}`)
-        .then(userData => {
-            res.send(userData.rows)
-        })
+router.get('/:id', async (req, res, next) => {
+    const id_parsed = userIdSchema.safeParse(req.params);
+    if (!id_parsed.success) {
+        return res.status(400).json({ error: "invalid id" })
+    }
+
+    try {
+        const result = await pool.query(
+            `
+            SELECT id, username, email, role, created, updated
+            FROM users 
+            WHERE id = $1
+            `,
+            [
+                id_parsed.data.id
+            ]
+        )
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: "provided id not found" });
+        }
+
+        res.status(200).json(result.rows[0]);
+    } catch (err) {
+        return next(err);
+    }
+        
 });
 
-router.post('/', async (req, res, next) => {
-    // check request body schema
+router.post("/", async (req, res, next) => {
     const parsed = createUserSchema.safeParse(req.body);
     if (!parsed.success) {
         return res.status(400).json(z.treeifyError(parsed.error));
     }
 
-    // attempt to insert data into DB
     try {
         const passwordHash = await bcrypt.hash(parsed.data.password, saltRounds);
 
@@ -61,60 +94,76 @@ router.post('/', async (req, res, next) => {
             ]
         );
 
-        res.status(201).json(result.rows[0]);
+        return res.status(201).json(result.rows[0]);
+
     } catch (err) {
-        if (err.code === '23505') {
-            return res.status(409).json({
-                error: err.detail
-            });
+        // Unique constraint violation
+        if (err.code === "23505") {
+            return res.status(409).json({ error: err.detail });
         }
 
-        next(err); // let global error handler deal with it
+        return next(err);
     }
 });
 
 
-// TO DO: validate that value for id is valid
 // only email and/or password can be edited according to user schema at this time
 // TO DO: make username & role changeable by admin role only
 router.put('/:id', async (req, res, next) => {
-    const { id } = req.params;
     const id_parsed = userIdSchema.safeParse(req.params);
-    if(!id_parsed.success){
-        return res.status(400).json({error: "invalid id"})
+    if (!id_parsed.success) {
+        return res.status(400).json({ error: "invalid id" })
     }
-    console.log(id_parsed)
 
-    //check request body schema
     const body_parsed = updateUserSchema.safeParse(req.body);
     if (!body_parsed.success) {
         return res.status(400).json(z.treeifyError(body_parsed.error));
     }
 
-    // attempt to update data in DB
     try {
         const queryData = await updateUserQuery(id_parsed.data.id, body_parsed.data);
-        console.log(queryData)
-
-        const { rows } = await pool.query(queryData[0], queryData[1]);
-        if (rows[0]) {
-            res.status(204).json(rows[0]);
-        } else if (rows[0] === undefined) { // undefined if user not found 
-            res.status(404).json({error: "provided ID not found"});
-        }
-        else {
-            res.status(500);
+        const result = await pool.query(queryData[0], queryData[1]);
+        
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: "provided ID not found" });
         }
         
+        return res.status(204).send();
+
     } catch (err) {
-        if (err.code === '23505') {
-            return res.status(409).json({
-                error: err.detail
-            });
+        return next(err);
+    }
+});
+
+// TO DO: make this API role protected
+router.delete('/:id', async (req, res, next) => {
+    const id_parsed = userIdSchema.safeParse(req.params);
+    if (!id_parsed.success) {
+        return res.status(400).json({ error: "invalid id" })
+    }
+
+    // attempt to insert data into DB
+    try {
+        const result = await pool.query(
+            `
+            DELETE FROM users 
+            WHERE id = $1
+            `,
+            [
+                id_parsed.data.id
+            ]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: "provided id not found" });
         }
 
-        next(err); // let global error handler deal with it
+        res.status(204).send();
+
+    } catch (err) {
+        return next(err);
     }
+
 });
 
 export default router;
