@@ -13,11 +13,10 @@ CREATE TABLE users (
 CREATE TABLE rooms (
     id SERIAL PRIMARY KEY,
 
-    name TEXT NOT NULL,
     status TEXT NOT NULL
         CHECK (status IN ('open', 'waiting', 'playing', 'finished', 'stale')),
 
-    max_players INTEGER NOT NULL CHECK (max_players BETWEEN 3 AND 8),
+    player_count INTEGER,
 
     created TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated TIMESTAMPTZ NOT NULL DEFAULT now()
