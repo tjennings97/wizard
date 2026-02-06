@@ -16,8 +16,6 @@ CREATE TABLE rooms (
     status TEXT NOT NULL
         CHECK (status IN ('open', 'waiting', 'playing', 'finished', 'stale')),
 
-    player_count INTEGER,
-
     created TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated TIMESTAMPTZ NOT NULL DEFAULT now()
 );

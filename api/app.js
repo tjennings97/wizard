@@ -1,7 +1,6 @@
 import express from 'express';
 import pool from './db.js'
 import games from './routes/games.js';
-import room_members from './routes/room_members.js';
 import rooms from './routes/rooms.js';
 import users from './routes/users.js';
 
@@ -11,7 +10,6 @@ app.use(express.json());
 
 // TO DO: enforce auth on each endpoint
 // app.use('/games', games);
-// app.use('/room_members', room_members);
 app.use('/rooms', rooms);
 app.use('/users', users);
 
