@@ -13,7 +13,6 @@ CREATE TABLE users (
 CREATE TABLE rooms (
     id SERIAL PRIMARY KEY,
 
-    name TEXT NOT NULL,
     status TEXT NOT NULL
         CHECK (status IN ('open', 'waiting', 'playing', 'finished', 'stale')),
 
