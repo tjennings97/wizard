@@ -17,8 +17,6 @@ CREATE TABLE rooms (
     status TEXT NOT NULL
         CHECK (status IN ('open', 'waiting', 'playing', 'finished', 'stale')),
 
-    max_players INTEGER NOT NULL CHECK (max_players BETWEEN 3 AND 8),
-
     created TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated TIMESTAMPTZ NOT NULL DEFAULT now()
 );

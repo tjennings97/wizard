@@ -58,7 +58,7 @@ router.get('/:id', async (req, res, next) => {
             [
                 id_parsed.data.id
             ]
-        )
+        );
 
         if (result.rowCount === 0) {
             return res.status(404).json({ error: "provided id not found" });
