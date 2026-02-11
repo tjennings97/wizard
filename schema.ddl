@@ -48,14 +48,15 @@ CREATE TABLE games (
 
     room_id INTEGER NOT NULL REFERENCES rooms(id),
     status TEXT NOT NULL
-        CHECK (status IN ('active', 'completed')),
+        CHECK (status IN ('active', 'completed', 'stale')),
 
     winner_user_id INTEGER REFERENCES users(id),
     final_state JSONB,
 
-    start_time TIMESTAMPTZ NOT NULL DEFAULT now(),
-    end_time TIMESTAMPTZ,
-
     created TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+CREATE UNIQUE INDEX one_active_game_per_room
+ON games (room_id)
+WHERE status = 'active';

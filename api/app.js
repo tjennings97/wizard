@@ -9,7 +9,7 @@ const app = express();
 app.use(express.json());
 
 // TO DO: enforce auth on each endpoint
-// app.use('/games', games);
+app.use('/games', games);
 app.use('/rooms', rooms);
 app.use('/users', users);
 

@@ -8,11 +8,6 @@ async function updateRoomQuery(roomId, data) {
     values.push(data.status);
   }
 
-  if (data.playerCount !== undefined) {
-    fields.push(`player_count = $${idx++}`);
-    values.push(data.playerCount);
-  }
-
   if (fields.length === 0) {
     throw new Error("No fields to update");
   }
