@@ -178,21 +178,6 @@ router.post('/:id/members', async (req, res, next) => {
     try {
         let seatNumber = null;
 
-        // check if user exists in any room as any role
-        const userCheck = await pool.query(
-        `
-        SELECT *
-        FROM room_members
-        WHERE user_id = $1
-        `,
-        [
-            body_parsed.data.userId
-        ]);
-
-        if (userCheck.rowCount > 0) {
-            return res.status(400).json({ error: "User is already in a room" });
-        }
-
         if (body_parsed.data.role === "player") {
             const seatCheck = await pool.query(
             `
@@ -215,6 +200,7 @@ router.post('/:id/members', async (req, res, next) => {
             seatNumber = available[0];
         }
 
+        // TO DO: update queries to be joint instead of two separate queries
         const addSeat = await pool.query(
         `
         INSERT INTO room_members (room_id, user_id, role, seat_number)
@@ -231,7 +217,11 @@ router.post('/:id/members', async (req, res, next) => {
         return res.status(204).send(addSeat.rows[0]);
     } catch (err) {
         if (err.code === "23503") {
+            // invalid room id or user id
             return res.status(400).json({ error: err.detail });
+        } else if (err.code === "23505") { 
+            // user already exists in room_members table due to index
+            return res.status(409).json({ error: "User already exists in a room" });
         }
         return next(err);
     }
