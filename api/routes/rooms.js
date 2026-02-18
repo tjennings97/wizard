@@ -2,11 +2,11 @@ import express from 'express';
 const router = express.Router();
 import pool from '../db.js'
 import {
-    roomIdSchema,
+    room_idSchema,
     updateRoomSchema,
-    createRoomMemberSchema
+    createRoomMemberSchema,
+    user_idSchema
 } from '../schemas/room_schema.js'
-import { userIdSchema } from '../schemas/user_schema.js'
 import * as z from "zod";
 
 const ROOM_MAX = 3;
@@ -18,7 +18,6 @@ router.use((req, res, next) => {
     next();
 });
 
-// define the root rooms route
 router.get('/', async (req, res, next) => {
 
     try {
@@ -42,6 +41,7 @@ router.get('/', async (req, res, next) => {
 });
 
 router.post("/", async (req, res, next) => {
+    // TO DO: update queries to be joint instead of two separate queries
     try {
         const roomCheck = await pool.query(
             `
@@ -72,8 +72,8 @@ router.post("/", async (req, res, next) => {
 });
 
 router.get('/:id', async (req, res, next) => {
-    const roomId_parsed = roomIdSchema.safeParse(req.params);
-    if (!roomId_parsed.success) {
+    const room_id_parsed = room_idSchema.safeParse(req.params.id);
+    if (!room_id_parsed.success) {
         return res.status(400).json({ error: "invalid id" })
     }
 
@@ -85,7 +85,7 @@ router.get('/:id', async (req, res, next) => {
             WHERE id = $1
             `,
             [
-                roomId_parsed.data.id
+                room_id_parsed.data
             ]
         )
 
@@ -101,8 +101,8 @@ router.get('/:id', async (req, res, next) => {
 });
 
 router.put('/:id', async (req, res, next) => {
-    const roomId_parsed = roomIdSchema.safeParse(req.params);
-    if (!roomId_parsed.success) {
+    const room_id_parsed = room_idSchema.safeParse(req.params.id);
+    if (!room_id_parsed.success) {
         return res.status(400).json({ error: "invalid id" })
     }
 
@@ -121,7 +121,7 @@ router.put('/:id', async (req, res, next) => {
             `,
             [
                 body_parsed.data.status,
-                roomId_parsed.data.id
+                room_id_parsed.data
             ]
         );
 
@@ -137,11 +137,11 @@ router.put('/:id', async (req, res, next) => {
 });
 
 router.get('/:id/members', async (req, res, next) => {
-    const roomId_parsed = roomIdSchema.safeParse(req.params);
-    if (!roomId_parsed.success) {
+    const room_id_parsed = room_idSchema.safeParse(req.params.id);
+    if (!room_id_parsed.success) {
         return res.status(400).json({ error: "invalid id" })
     }
-
+    
     try {
         const result = await pool.query(
             `
@@ -150,7 +150,7 @@ router.get('/:id/members', async (req, res, next) => {
             WHERE room_id = $1
             `,
             [
-                roomId_parsed.data.id
+                room_id_parsed.data
             ]
         );
 
@@ -165,8 +165,8 @@ router.get('/:id/members', async (req, res, next) => {
 });
 
 router.post('/:id/members', async (req, res, next) => {
-    const roomId_parsed = roomIdSchema.safeParse({ id: req.params.id });
-    if (!roomId_parsed.success) {
+    const room_id_parsed = room_idSchema.safeParse(req.params.id);
+    if (!room_id_parsed.success) {
         return res.status(400).json({ error: "invalid room id" })
     }
 
@@ -176,7 +176,7 @@ router.post('/:id/members', async (req, res, next) => {
     }
 
     try {
-        let seatNumber = null;
+        let seat_number = null;
 
         if (body_parsed.data.role === "player") {
             const seatCheck = await pool.query(
@@ -186,7 +186,7 @@ router.post('/:id/members', async (req, res, next) => {
             WHERE room_id = $1 AND role = 'player'
             `,
             [
-                roomId_parsed.data.id
+                room_id_parsed.data
             ]
             );
 
@@ -197,7 +197,7 @@ router.post('/:id/members', async (req, res, next) => {
             const takenSeats = new Set(seatCheck.rows.map(r => r.seat_number));
             const allSeats = [...Array(MAX_SEATS).keys()].map(i => i + 1);;
             const available = allSeats.filter(seat => !takenSeats.has(seat));
-            seatNumber = available[0];
+            seat_number = available[0];
         }
 
         // TO DO: update queries to be joint instead of two separate queries
@@ -208,13 +208,13 @@ router.post('/:id/members', async (req, res, next) => {
         RETURNING *
         `,
         [
-            roomId_parsed.data.id,
-            body_parsed.data.userId,
+            room_id_parsed.data,
+            body_parsed.data.user_id,
             body_parsed.data.role,
-            seatNumber
+            seat_number
         ]);
 
-        return res.status(204).send(addSeat.rows[0]);
+        return res.status(201).send(addSeat.rows[0]);
     } catch (err) {
         if (err.code === "23503") {
             // invalid room id or user id
@@ -228,12 +228,12 @@ router.post('/:id/members', async (req, res, next) => {
 });
 
 router.get('/:room_id/members/:user_id', async (req, res, next) => {
-    const roomId_parsed = roomIdSchema.safeParse({ id: req.params.room_id });
-    if (!roomId_parsed.success) {
+    const room_id_parsed = room_idSchema.safeParse(req.params.room_id);
+    if (!room_id_parsed.success) {
         return res.status(400).json({ error: "invalid room id" })
     }
-    const userId_parsed = userIdSchema.safeParse({ id: req.params.user_id });
-    if (!userId_parsed.success) {
+    const user_id_parsed = user_idSchema.safeParse(req.params.user_id);
+    if (!user_id_parsed.success) {
         return res.status(400).json({ error: "invalid user id" })
     }
 
@@ -245,13 +245,13 @@ router.get('/:room_id/members/:user_id', async (req, res, next) => {
             WHERE room_id = $1 AND user_id = $2
             `,
             [
-                roomId_parsed.data.id,
-                userId_parsed.data.id
+                room_id_parsed.data,
+                user_id_parsed.data
             ]
         );
 
         if (result.rowCount === 0) {
-            return res.status(404).json({ error: "no room_members found" });
+            return res.status(404).json({ error: "no room member found" });
         }
 
         return res.status(200).json(result.rows);
@@ -261,12 +261,12 @@ router.get('/:room_id/members/:user_id', async (req, res, next) => {
 });
 
 router.delete('/:room_id/members/:user_id', async (req, res, next) => {
-    const roomId_parsed = roomIdSchema.safeParse({ id: req.params.room_id });
-    if (!roomId_parsed.success) {
+    const room_id_parsed = room_idSchema.safeParse(req.params.room_id);
+    if (!room_id_parsed.success) {
         return res.status(400).json({ error: "invalid room id" })
     }
-    const userId_parsed = userIdSchema.safeParse({ id: req.params.user_id });
-    if (!userId_parsed.success) {
+    const user_id_parsed = user_idSchema.safeParse(req.params.user_id);
+    if (!user_id_parsed.success) {
         return res.status(400).json({ error: "invalid user id" })
     }
 
@@ -277,8 +277,8 @@ router.delete('/:room_id/members/:user_id', async (req, res, next) => {
             WHERE room_id = $1 AND user_id = $2
             `,
             [
-                roomId_parsed.data.id,
-                userId_parsed.data.id
+                room_id_parsed.data,
+                user_id_parsed.data
             ]
         );
 
@@ -286,7 +286,7 @@ router.delete('/:room_id/members/:user_id', async (req, res, next) => {
             return res.status(404).json({ error: "no room_members found" });
         }
 
-        return res.status(200).json(result.rows);
+        return res.status(204).send();
     } catch (err) {
         return next(err);
     }

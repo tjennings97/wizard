@@ -4,7 +4,8 @@ import pool from '../db.js'
 import {
     createUserSchema,
     updateUserSchema,
-    userIdSchema
+    userIdSchema,
+    user_idSchema
 } from '../schemas/user_schema.js'
 import bcrypt from 'bcrypt';
 import * as z from "zod";

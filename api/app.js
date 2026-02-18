@@ -4,6 +4,8 @@ import games from './routes/games.js';
 import rooms from './routes/rooms.js';
 import users from './routes/users.js';
 
+import { generateOpenApiDocument } from './docs/registry.js';
+import { swaggerUi } from './swagger.js';
 const app = express();
 
 app.use(express.json());
@@ -16,6 +18,14 @@ app.use('/users', users);
 app.use((err, req, res, next) => {
   console.error(err);
   res.status(500).json({ error: "Internal server error" });
+});
+
+// Swagger docs
+const openApiDoc = generateOpenApiDocument()
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(openApiDoc));
+
+app.get('/', (req, res) => {
+  res.send('Hello, world!');
 });
 
 app.listen(3000, () =>

@@ -1,4 +1,4 @@
-async function updateRoomQuery(roomId, data) {
+async function updateRoomQuery(room_id, data) {
   const fields = [];
   const values = [];
   let idx = 1;
@@ -16,7 +16,7 @@ async function updateRoomQuery(roomId, data) {
   fields.push(`updated = now()`);
 
   // push the id as the last value
-  values.push(roomId)
+  values.push(room_id)
 
   const query = `UPDATE rooms SET ${fields.join(", ")} WHERE id = $${idx} RETURNING id, status, player_count, updated;`;
 
