@@ -3,7 +3,7 @@ const router = express.Router();
 import pool from '../db.js'
 import { 
     createGameSchema, 
-    gameIdSchema,
+    game_idSchema,
     updateGameSchema
 } from '../schemas/game_schema.js';
 import * as z from "zod";
@@ -50,7 +50,7 @@ router.post("/", async (req, res, next) => {
             RETURNING *
             `,
             [
-                body_parsed.data.roomId,
+                body_parsed.data.room_id,
                 body_parsed.data.status
             ]
         );
@@ -61,13 +61,15 @@ router.post("/", async (req, res, next) => {
         if (err.code === "23505") {
             // there is already an active game in the room
             return res.status(409).json({ error: "There is already an active game in the room" });
+        } else if (err.code === "23503") {
+            return res.status(400).json({ error: "The room does not exist"})
         }
         return next(err);
     }
 });
 
 router.get('/:id', async (req, res, next) => {
-    const gameId_parsed = gameIdSchema.safeParse(req.params);
+    const gameId_parsed = game_idSchema.safeParse(req.params.id);
     if (!gameId_parsed.success) {
         return res.status(400).json({ error: "invalid id" })
     }
@@ -80,7 +82,7 @@ router.get('/:id', async (req, res, next) => {
             WHERE id = $1
             `,
             [
-                gameId_parsed.data.id
+                gameId_parsed.data
             ]
         )
 
@@ -96,7 +98,7 @@ router.get('/:id', async (req, res, next) => {
 });
 
 router.put('/:id', async (req, res, next) => {
-    const id_parsed = gameIdSchema.safeParse(req.params);
+    const id_parsed = game_idSchema.safeParse(req.params.id);
     if (!id_parsed.success) {
         return res.status(400).json({ error: "invalid id" })
     }
@@ -107,7 +109,7 @@ router.put('/:id', async (req, res, next) => {
     }
 
     try {
-        const queryData = await updateGameQuery(id_parsed.data.id, body_parsed.data);
+        const queryData = await updateGameQuery(id_parsed.data, body_parsed.data);
         const result = await pool.query(queryData[0], queryData[1]);
         
         if (result.rowCount === 0) {
@@ -117,6 +119,9 @@ router.put('/:id', async (req, res, next) => {
         return res.status(204).send();
 
     } catch (err) {
+        if (err.code === "23503") {
+            return res.status(400).json({ error: "The user is not a member of the room"})
+        }
         return next(err);
     }
 });

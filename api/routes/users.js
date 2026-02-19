@@ -4,7 +4,8 @@ import pool from '../db.js'
 import {
     createUserSchema,
     updateUserSchema,
-    userIdSchema
+    userIdSchema,
+    user_idSchema
 } from '../schemas/user_schema.js'
 import bcrypt from 'bcrypt';
 import * as z from "zod";
@@ -42,35 +43,6 @@ router.get('/', async (req, res, next) => {
 
 });
 
-router.get('/:id', async (req, res, next) => {
-    const id_parsed = userIdSchema.safeParse(req.params);
-    if (!id_parsed.success) {
-        return res.status(400).json({ error: "invalid id" })
-    }
-
-    try {
-        const result = await pool.query(
-            `
-            SELECT id, username, email, role, created, updated
-            FROM users 
-            WHERE id = $1
-            `,
-            [
-                id_parsed.data.id
-            ]
-        );
-
-        if (result.rowCount === 0) {
-            return res.status(404).json({ error: "provided id not found" });
-        }
-
-        res.status(200).json(result.rows[0]);
-    } catch (err) {
-        return next(err);
-    }
-        
-});
-
 router.post("", async (req, res, next) => {
     const parsed = createUserSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -84,7 +56,7 @@ router.post("", async (req, res, next) => {
             `
             INSERT INTO users (username, email, password_hash, role)
             VALUES ($1, $2, $3, $4)
-            RETURNING id, username, email, role
+            RETURNING id, username, email, role, created, updated
             `,
             [
                 parsed.data.username,
@@ -106,6 +78,34 @@ router.post("", async (req, res, next) => {
     }
 });
 
+router.get('/:id', async (req, res, next) => {
+    const id_parsed = user_idSchema.safeParse(req.params.id);
+    if (!id_parsed.success) {
+        return res.status(400).json({ error: "invalid id" })
+    }
+
+    try {
+        const result = await pool.query(
+            `
+            SELECT id, username, email, role, created, updated
+            FROM users 
+            WHERE id = $1
+            `,
+            [
+                id_parsed.data
+            ]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: "provided id not found" });
+        }
+
+        res.status(200).json(result.rows[0]);
+    } catch (err) {
+        return next(err);
+    }
+        
+});
 
 // only email and/or password can be edited according to user schema at this time
 // TO DO: make username & role changeable by admin role only
