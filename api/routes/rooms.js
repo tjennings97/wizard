@@ -7,6 +7,7 @@ import {
     createRoomMemberSchema
 } from '../schemas/room_schema.js'
 import { user_idSchema } from '../schemas/user_schema.js';
+import { authenticate, requireRole } from '../helpers/auth.js';
 import * as z from "zod";
 
 const ROOM_MAX = 3;
@@ -18,7 +19,7 @@ router.use((req, res, next) => {
     next();
 });
 
-router.get('/', async (req, res, next) => {
+router.get('/', authenticate, async (req, res, next) => {
 
     try {
         const result = await pool.query(
@@ -40,7 +41,7 @@ router.get('/', async (req, res, next) => {
 
 });
 
-router.post("/", async (req, res, next) => {
+router.post("/", authenticate, async (req, res, next) => {
     // TO DO: update queries to be joint instead of two separate queries
     try {
         const roomCheck = await pool.query(
@@ -71,7 +72,7 @@ router.post("/", async (req, res, next) => {
     }
 });
 
-router.get('/:id', async (req, res, next) => {
+router.get('/:id', authenticate, async (req, res, next) => {
     const room_id_parsed = room_idSchema.safeParse(req.params.id);
     if (!room_id_parsed.success) {
         return res.status(400).json({ error: "invalid id" })
@@ -100,7 +101,7 @@ router.get('/:id', async (req, res, next) => {
 
 });
 
-router.put('/:id', async (req, res, next) => {
+router.put('/:id', authenticate, async (req, res, next) => {
     const room_id_parsed = room_idSchema.safeParse(req.params.id);
     if (!room_id_parsed.success) {
         return res.status(400).json({ error: "invalid id" })
@@ -136,7 +137,7 @@ router.put('/:id', async (req, res, next) => {
     }
 });
 
-router.get('/:id/members', async (req, res, next) => {
+router.get('/:id/members', authenticate, async (req, res, next) => {
     const room_id_parsed = room_idSchema.safeParse(req.params.id);
     if (!room_id_parsed.success) {
         return res.status(400).json({ error: "invalid id" })
@@ -164,7 +165,7 @@ router.get('/:id/members', async (req, res, next) => {
     }
 });
 
-router.post('/:id/members', async (req, res, next) => {
+router.post('/:id/members', authenticate, async (req, res, next) => {
     const room_id_parsed = room_idSchema.safeParse(req.params.id);
     if (!room_id_parsed.success) {
         return res.status(400).json({ error: "invalid room id" })
@@ -173,6 +174,11 @@ router.post('/:id/members', async (req, res, next) => {
     const body_parsed = createRoomMemberSchema.safeParse(req.body);
     if (!body_parsed.success) {
         return res.status(400).json(z.treeifyError(body_parsed.error));
+    }
+
+    // non-admin user can only add themselves to a room
+    if (req.user.role != "admin" && req.user.userId != user_id_parsed.data) {
+        return res.status(403).json({ error: "Forbidden" });
     }
 
     try {
@@ -227,7 +233,7 @@ router.post('/:id/members', async (req, res, next) => {
     }
 });
 
-router.get('/:room_id/members/:user_id', async (req, res, next) => {
+router.get('/:room_id/members/:user_id', authenticate, async (req, res, next) => {
     const room_id_parsed = room_idSchema.safeParse(req.params.room_id);
     if (!room_id_parsed.success) {
         return res.status(400).json({ error: "invalid room id" })
@@ -235,6 +241,11 @@ router.get('/:room_id/members/:user_id', async (req, res, next) => {
     const user_id_parsed = user_idSchema.safeParse(req.params.user_id);
     if (!user_id_parsed.success) {
         return res.status(400).json({ error: "invalid user id" })
+    }
+
+    // non-admin user can only retrieve themselves from a room
+    if (req.user.role != "admin" && req.user.userId != user_id_parsed.data) {
+        return res.status(403).json({ error: "Forbidden" });
     }
 
     try {
@@ -260,7 +271,7 @@ router.get('/:room_id/members/:user_id', async (req, res, next) => {
     }
 });
 
-router.delete('/:room_id/members/:user_id', async (req, res, next) => {
+router.delete('/:room_id/members/:user_id', authenticate, async (req, res, next) => {
     const room_id_parsed = room_idSchema.safeParse(req.params.room_id);
     if (!room_id_parsed.success) {
         return res.status(400).json({ error: "invalid room id" })
@@ -268,6 +279,11 @@ router.delete('/:room_id/members/:user_id', async (req, res, next) => {
     const user_id_parsed = user_idSchema.safeParse(req.params.user_id);
     if (!user_id_parsed.success) {
         return res.status(400).json({ error: "invalid user id" })
+    }
+
+    // non-admin user can only remove themselves from a room
+    if (req.user.role != "admin" && req.user.userId != user_id_parsed.data) {
+        return res.status(403).json({ error: "Forbidden" });
     }
 
     try {

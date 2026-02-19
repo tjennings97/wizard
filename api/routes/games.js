@@ -8,6 +8,7 @@ import {
 } from '../schemas/game_schema.js';
 import * as z from "zod";
 import updateGameQuery from '../helpers/updateGameQuery.js';
+import { authenticate, requireRole } from '../helpers/auth.js';
 
 // middleware that is specific to this router
 router.use((req, res, next) => {
@@ -16,7 +17,7 @@ router.use((req, res, next) => {
 });
 
 // define the root games route
-router.get('/', async (req, res, next) => {
+router.get('/', authenticate, async (req, res, next) => {
 
     try {
         const result = await pool.query(
@@ -36,7 +37,7 @@ router.get('/', async (req, res, next) => {
     }
 });
 
-router.post("/", async (req, res, next) => {
+router.post("/", authenticate, async (req, res, next) => {
     const body_parsed = createGameSchema.safeParse(req.body);
     if (!body_parsed.success) {
         return res.status(400).json(z.treeifyError(body_parsed.error));
@@ -68,7 +69,7 @@ router.post("/", async (req, res, next) => {
     }
 });
 
-router.get('/:id', async (req, res, next) => {
+router.get('/:id', authenticate, async (req, res, next) => {
     const gameId_parsed = game_idSchema.safeParse(req.params.id);
     if (!gameId_parsed.success) {
         return res.status(400).json({ error: "invalid id" })
@@ -97,7 +98,7 @@ router.get('/:id', async (req, res, next) => {
 
 });
 
-router.put('/:id', async (req, res, next) => {
+router.put('/:id', authenticate, async (req, res, next) => {
     const id_parsed = game_idSchema.safeParse(req.params.id);
     if (!id_parsed.success) {
         return res.status(400).json({ error: "invalid id" })
