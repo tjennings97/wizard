@@ -8,9 +8,9 @@ async function updateGameQuery(gameId, data) {
     values.push(data.status);
   }
 
-  if (data.winnerUserId !== undefined) {
+  if (data.winneruser_id !== undefined) {
     fields.push(`winner_user_id = $${idx++}`);
-    values.push(data.winnerUserId);
+    values.push(data.winneruser_id);
   }
 
   if (data.finalState !== undefined) {

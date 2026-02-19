@@ -1,10 +1,10 @@
 import { extendZodWithOpenApi } from '@asteasolutions/zod-to-openapi';
 import * as z from "zod";
+import { user_idSchema } from '../schemas/user_schema.js'
 
 extendZodWithOpenApi(z);
 
 const room_idSchema = z.coerce.number().int().openapi({ example: 1 });
-const user_idSchema = z.coerce.number().int().openapi({ example: 1 });
 const roomStatusSchema = z.enum(["open", "waiting", "playing", "finished", "stale"]).openapi({ example: 'open' });
 const roomMemberRoleSchema = z.enum(["player", "spectator"]).openapi({ example: 'player' });
 
@@ -63,6 +63,6 @@ const roomMembersResponseSchema = z.array(roomMemberResponseSchema)
   .openapi('RoomMembers');
 
 export {
-  room_idSchema, user_idSchema, updateRoomSchema, createRoomMemberSchema,
+  room_idSchema, updateRoomSchema, createRoomMemberSchema,
   roomResponseSchema, roomsResponseSchema, roomMemberResponseSchema, roomMembersResponseSchema
 }

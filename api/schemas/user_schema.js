@@ -1,4 +1,7 @@
 import * as z from "zod";
+import { extendZodWithOpenApi } from '@asteasolutions/zod-to-openapi';
+
+extendZodWithOpenApi(z);
 
 const user_idSchema = z.coerce.number().int().openapi({ example: 1 });
 const userRoleSchema = z.enum(["admin", "player"]).openapi({ example: 'player'})

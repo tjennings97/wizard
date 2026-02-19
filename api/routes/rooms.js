@@ -4,9 +4,9 @@ import pool from '../db.js'
 import {
     room_idSchema,
     updateRoomSchema,
-    createRoomMemberSchema,
-    user_idSchema
+    createRoomMemberSchema
 } from '../schemas/room_schema.js'
+import { user_idSchema } from '../schemas/user_schema.js';
 import * as z from "zod";
 
 const ROOM_MAX = 3;
