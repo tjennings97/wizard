@@ -10,6 +10,7 @@ import {
 import bcrypt from 'bcrypt';
 import * as z from "zod";
 import updateUserQuery from '../helpers/updateUserQuery.js'
+import { authenticate, requireRole } from '../helpers/auth.js';
 
 // bcrpyt cost factor
 const saltRounds = 10;
@@ -21,7 +22,7 @@ router.use((req, res, next) => {
 });
 
 // define the root users route
-router.get('/', async (req, res, next) => {
+router.get('/', authenticate, requireRole('admin'), async (req, res, next) => {
 
     try {
         const result = await pool.query(
@@ -43,7 +44,7 @@ router.get('/', async (req, res, next) => {
 
 });
 
-router.post("", async (req, res, next) => {
+router.post("/", authenticate, requireRole('admin'), async (req, res, next) => {
     const parsed = createUserSchema.safeParse(req.body);
     if (!parsed.success) {
         return res.status(400).json(z.treeifyError(parsed.error));
@@ -78,10 +79,15 @@ router.post("", async (req, res, next) => {
     }
 });
 
-router.get('/:id', async (req, res, next) => {
+router.get('/:id', authenticate, async (req, res, next) => {
     const id_parsed = user_idSchema.safeParse(req.params.id);
     if (!id_parsed.success) {
         return res.status(400).json({ error: "invalid id" })
+    }
+
+    // non-admin user can only retrieve themselves
+    if (req.user.role != "admin" && req.user.userId != user_id_parsed.data) {
+        return res.status(403).json({ error: "Forbidden" });
     }
 
     try {
@@ -109,7 +115,7 @@ router.get('/:id', async (req, res, next) => {
 
 // only email and/or password can be edited according to user schema at this time
 // TO DO: make username & role changeable by admin role only
-router.put('/:id', async (req, res, next) => {
+router.put('/:id', authenticate, async (req, res, next) => {
     const id_parsed = userIdSchema.safeParse(req.params);
     if (!id_parsed.success) {
         return res.status(400).json({ error: "invalid id" })
@@ -119,6 +125,10 @@ router.put('/:id', async (req, res, next) => {
     if (!body_parsed.success) {
         return res.status(400).json(z.treeifyError(body_parsed.error));
     }
+
+    // // non-admin user can only modify email & password themselves
+    // if (req.user.role != "admin" && req.user.userId != user_id_parsed.data) {
+    // }
 
     try {
         const queryData = await updateUserQuery(id_parsed.data.id, body_parsed.data);
@@ -135,8 +145,7 @@ router.put('/:id', async (req, res, next) => {
     }
 });
 
-// TO DO: make this API role protected
-router.delete('/:id', async (req, res, next) => {
+router.delete('/:id', authenticate, requireRole('admin'), async (req, res, next) => {
     const id_parsed = userIdSchema.safeParse(req.params);
     if (!id_parsed.success) {
         return res.status(400).json({ error: "invalid id" })

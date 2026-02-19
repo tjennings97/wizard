@@ -3,6 +3,7 @@ import {
     OpenApiGeneratorV3,
 } from '@asteasolutions/zod-to-openapi'
 
+import { loginSchema } from '../schemas/login_schema.js';
 import {
     userResponseSchema,
     usersResponseSchema,
@@ -19,16 +20,58 @@ import {
     roomMemberResponseSchema,
     createRoomMemberSchema
 } from '../schemas/room_schema.js'
-import { 
+import {
     gamesResponseSchema,
     gameResponseSchema,
     createGameSchema,
     game_idSchema,
     updateGameSchema
- } from '../schemas/game_schema.js';
+} from '../schemas/game_schema.js';
 import * as z from "zod";
 
 const registry = new OpenAPIRegistry()
+
+// Define the Bearer Auth structure
+registry.registerComponent('securitySchemes', 'bearerAuth', {
+  type: 'http',
+  scheme: 'bearer',
+  bearerFormat: 'JWT'
+});
+
+// Register post login path
+registry.registerPath({
+    method: "post",
+    path: "/login",
+    tags: ["Auth"],
+    summary: "Authenticate user and return JWT",
+    request: {
+        body: {
+            required: true,
+            content: {
+                "application/json": {
+                    schema: loginSchema
+                }
+            }
+        }
+    },
+    responses: {
+        200: {
+            description: "Login successful",
+            content: {
+                "application/json": {
+                    schema: z.object({
+                        token: z.string().openapi({
+                            example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                        })
+                    })
+                }
+            }
+        },
+        401: {
+            description: "Invalid credentials"
+        }
+    }
+});
 
 // Register get users path
 registry.registerPath({
@@ -36,6 +79,7 @@ registry.registerPath({
     path: "/users",
     tags: ["Users"],
     summary: "Returns list of users",
+    security: [{ bearerAuth: [] }],
     responses: {
         200: {
             description: "Users retrieved successfully",
@@ -44,6 +88,9 @@ registry.registerPath({
                     schema: usersResponseSchema,
                 },
             },
+        },
+        401: {
+            description: "Unauthorized"
         },
         404: {
             description: "no users found"
@@ -60,6 +107,7 @@ registry.registerPath({
     path: "/users/{id}",
     tags: ["Users"],
     summary: "Returns specified user",
+    security: [{ bearerAuth: [] }],
     request: {
         params: z.object({
             id: user_idSchema.openapi({
@@ -99,6 +147,7 @@ registry.registerPath({
     path: "/users",
     tags: ["Users"],
     summary: "Create new user",
+    security: [{ bearerAuth: [] }],
     request: {
         body: {
             content: {
@@ -135,6 +184,7 @@ registry.registerPath({
     path: "/users/{id}",
     tags: ["Users"],
     summary: "Modify specified user",
+    security: [{ bearerAuth: [] }],
     request: {
         params: z.object({
             id: user_idSchema.openapi({
@@ -176,6 +226,7 @@ registry.registerPath({
     path: "/users/{id}",
     tags: ["Users"],
     summary: "Delete specified user",
+    security: [{ bearerAuth: [] }],
     request: {
         params: z.object({
             id: user_idSchema.openapi({
@@ -210,6 +261,7 @@ registry.registerPath({
     path: "/rooms",
     tags: ["Rooms"],
     summary: "Returns list of rooms",
+    security: [{ bearerAuth: [] }],
     responses: {
         200: {
             description: "Rooms retrieved successfully",
@@ -234,6 +286,7 @@ registry.registerPath({
     path: "/rooms",
     tags: ["Rooms"],
     summary: "Create new room",
+    security: [{ bearerAuth: [] }],
     responses: {
         201: {
             description: "Room created successfully",
@@ -258,6 +311,7 @@ registry.registerPath({
     path: "/rooms/{id}",
     tags: ["Rooms"],
     summary: "Returns specified room",
+    security: [{ bearerAuth: [] }],
     request: {
         params: z.object({
             id: room_idSchema.openapi({
@@ -297,6 +351,7 @@ registry.registerPath({
     path: "/rooms/{id}",
     tags: ["Rooms"],
     summary: "Modify specified room",
+    security: [{ bearerAuth: [] }],
     request: {
         params: z.object({
             id: room_idSchema.openapi({
@@ -338,6 +393,7 @@ registry.registerPath({
     path: "/rooms/{id}/members",
     tags: ["RoomMembers"],
     summary: "Returns specified room's members",
+    security: [{ bearerAuth: [] }],
     request: {
         params: z.object({
             id: room_idSchema.openapi({
@@ -377,6 +433,7 @@ registry.registerPath({
     path: "/rooms/{room_id}/members",
     tags: ["RoomMembers"],
     summary: "Add user to room",
+    security: [{ bearerAuth: [] }],
     request: {
         params: z.object({
             room_id: room_idSchema.openapi({
@@ -423,6 +480,7 @@ registry.registerPath({
     path: "/rooms/{room_id}/members/{user_id}",
     tags: ["RoomMembers"],
     summary: "Returns specified room member",
+    security: [{ bearerAuth: [] }],
     request: {
         params: z.object({
             room_id: room_idSchema.openapi({
@@ -470,6 +528,7 @@ registry.registerPath({
     path: "/rooms/{room_id}/members/{user_id}",
     tags: ["RoomMembers"],
     summary: "Remove specified user from specified room",
+    security: [{ bearerAuth: [] }],
     request: {
         params: z.object({
             room_id: room_idSchema.openapi({
@@ -512,6 +571,7 @@ registry.registerPath({
     path: "/games",
     tags: ["Games"],
     summary: "Returns list of games",
+    security: [{ bearerAuth: [] }],
     responses: {
         200: {
             description: "games retrieved successfully",
@@ -536,6 +596,7 @@ registry.registerPath({
     path: "/games",
     tags: ["Games"],
     summary: "Create new game",
+    security: [{ bearerAuth: [] }],
     request: {
         body: {
             content: {
@@ -572,6 +633,7 @@ registry.registerPath({
     path: "/games/{id}",
     tags: ["Games"],
     summary: "Returns specified game",
+    security: [{ bearerAuth: [] }],
     request: {
         params: z.object({
             id: game_idSchema.openapi({
@@ -611,6 +673,7 @@ registry.registerPath({
     path: "/games/{id}",
     tags: ["Games"],
     summary: "Modify specified game",
+    security: [{ bearerAuth: [] }],
     request: {
         params: z.object({
             id: game_idSchema.openapi({
