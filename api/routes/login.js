@@ -38,7 +38,14 @@ router.post("/", async (req, res) => {
         { expiresIn: "2h" }
     );
 
-    res.json({ token });
+    const userResponse = {
+        token, 
+        user: {
+            id: dbUser.id,
+            username: dbUser.username
+        }
+    }
+    res.json(userResponse).send(200);
 });
 
 export default router;

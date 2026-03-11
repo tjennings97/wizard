@@ -8,6 +8,7 @@ import {
 } from '../schemas/room_schema.js'
 import { user_idSchema } from '../schemas/user_schema.js';
 import { authenticate, requireRole } from '../helpers/auth.js';
+import { addMember } from '../../services/roomService.js';
 import * as z from "zod";
 
 const ROOM_MAX = 3;
@@ -25,7 +26,8 @@ router.get('/', authenticate, async (req, res, next) => {
         const result = await pool.query(
             `
             SELECT *
-            FROM rooms
+            FROM rooms 
+            ORDER BY id ASC
             `
         );
 
@@ -53,14 +55,14 @@ router.post("/", authenticate, async (req, res, next) => {
 
         if (roomCheck.rowCount < ROOM_MAX) {
             const addRoom = await pool.query(
-            `
+                `
             INSERT INTO rooms (status)
             VALUES ($1)
             RETURNING *
             `,
-            [
-                'open'
-            ]
+                [
+                    'open'
+                ]
             );
 
             return res.status(201).json(addRoom.rows[0]);
@@ -142,7 +144,7 @@ router.get('/:id/members', authenticate, async (req, res, next) => {
     if (!room_id_parsed.success) {
         return res.status(400).json({ error: "invalid id" })
     }
-    
+
     try {
         const result = await pool.query(
             `
@@ -177,60 +179,27 @@ router.post('/:id/members', authenticate, async (req, res, next) => {
     }
 
     // non-admin user can only add themselves to a room
-    if (req.user.role != "admin" && req.user.userId != user_id_parsed.data) {
+    if (req.user.role != "admin" && req.user.userId != body_parsed.data.user_id) {
         return res.status(403).json({ error: "Forbidden" });
     }
 
     try {
-        let seat_number = null;
-
-        if (body_parsed.data.role === "player") {
-            const seatCheck = await pool.query(
-            `
-            SELECT seat_number
-            FROM room_members
-            WHERE room_id = $1 AND role = 'player'
-            `,
-            [
-                room_id_parsed.data
-            ]
-            );
-
-            if (seatCheck.rowCount >= 8) {
-                return res.status(400).json({ error: "Room is full" });
-            }
-
-            const takenSeats = new Set(seatCheck.rows.map(r => r.seat_number));
-            const allSeats = [...Array(MAX_SEATS).keys()].map(i => i + 1);;
-            const available = allSeats.filter(seat => !takenSeats.has(seat));
-            seat_number = available[0];
-        }
-
-        // TO DO: update queries to be joint instead of two separate queries
-        const addSeat = await pool.query(
-        `
-        INSERT INTO room_members (room_id, user_id, role, seat_number)
-        VALUES ($1, $2, $3, $4)
-        RETURNING *
-        `,
-        [
-            room_id_parsed.data,
-            body_parsed.data.user_id,
-            body_parsed.data.role,
-            seat_number
-        ]);
-
-        return res.status(201).send(addSeat.rows[0]);
+        const { newMember, started } = await addMember(room_id_parsed.data, body_parsed.data.user_id, body_parsed.data.role, req.io);
+        return res.status(201).json(newMember);
     } catch (err) {
-        if (err.code === "23503") {
-            // invalid room id or user id
-            return res.status(400).json({ error: err.detail });
-        } else if (err.code === "23505") { 
-            // user already exists in room_members table due to index
-            return res.status(409).json({ error: "User already exists in a room" });
-        }
-        return next(err);
+        console.log(err)
+        return res.status(err.status || 500).json({ error: err.message });
     }
+    // catch (err) {
+    //     if (err.code === "23503") {
+    //         // invalid room id or user id
+    //         return res.status(400).json({ error: err.detail });
+    //     } else if (err.code === "23505") { 
+    //         // user already exists in room_members table due to index
+    //         return res.status(409).json({ error: "User already exists in a room" });
+    //     }
+    //     return next(err);
+    // }
 });
 
 router.get('/:room_id/members/:user_id', authenticate, async (req, res, next) => {
