@@ -1,8 +1,7 @@
 import {
     OpenAPIRegistry,
     OpenApiGeneratorV3,
-} from '@asteasolutions/zod-to-openapi'
-
+} from '@asteasolutions/zod-to-openapi';
 import { loginSchema } from '../schemas/login_schema.js';
 import {
     userResponseSchema,
@@ -38,10 +37,12 @@ registry.registerComponent('securitySchemes', 'bearerAuth', {
   bearerFormat: 'JWT'
 });
 
+// TO DO: add 401 & 403 responses
+
 // Register post login path
 registry.registerPath({
     method: "post",
-    path: "/login",
+    path: "/api/login",
     tags: ["Auth"],
     summary: "Authenticate user and return JWT",
     request: {
@@ -62,6 +63,10 @@ registry.registerPath({
                     schema: z.object({
                         token: z.string().openapi({
                             example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                        }),
+                        user: z.object({
+                            id: z.coerce.number().int().openapi({ example: 1 }),
+                            username: z.string().min(3).openapi({ example: 'username'})
                         })
                     })
                 }
@@ -76,7 +81,7 @@ registry.registerPath({
 // Register get users path
 registry.registerPath({
     method: "get",
-    path: "/users",
+    path: "/api/users",
     tags: ["Users"],
     summary: "Returns list of users",
     security: [{ bearerAuth: [] }],
@@ -104,7 +109,7 @@ registry.registerPath({
 // Register get user path
 registry.registerPath({
     method: "get",
-    path: "/users/{id}",
+    path: "/api/users/{id}",
     tags: ["Users"],
     summary: "Returns specified user",
     security: [{ bearerAuth: [] }],
@@ -144,7 +149,7 @@ registry.registerPath({
 // Register post user path
 registry.registerPath({
     method: "post",
-    path: "/users",
+    path: "/api/users",
     tags: ["Users"],
     summary: "Create new user",
     security: [{ bearerAuth: [] }],
@@ -181,7 +186,7 @@ registry.registerPath({
 // Register put user path
 registry.registerPath({
     method: "put",
-    path: "/users/{id}",
+    path: "/api/users/{id}",
     tags: ["Users"],
     summary: "Modify specified user",
     security: [{ bearerAuth: [] }],
@@ -223,7 +228,7 @@ registry.registerPath({
 // Register delete user path
 registry.registerPath({
     method: "delete",
-    path: "/users/{id}",
+    path: "/api/users/{id}",
     tags: ["Users"],
     summary: "Delete specified user",
     security: [{ bearerAuth: [] }],
@@ -258,7 +263,7 @@ registry.registerPath({
 // Register get rooms path
 registry.registerPath({
     method: "get",
-    path: "/rooms",
+    path: "/api/rooms",
     tags: ["Rooms"],
     summary: "Returns list of rooms",
     security: [{ bearerAuth: [] }],
@@ -283,7 +288,7 @@ registry.registerPath({
 // Register post room path
 registry.registerPath({
     method: "post",
-    path: "/rooms",
+    path: "/api/rooms",
     tags: ["Rooms"],
     summary: "Create new room",
     security: [{ bearerAuth: [] }],
@@ -308,7 +313,7 @@ registry.registerPath({
 // Register get room path
 registry.registerPath({
     method: "get",
-    path: "/rooms/{id}",
+    path: "/api/rooms/{id}",
     tags: ["Rooms"],
     summary: "Returns specified room",
     security: [{ bearerAuth: [] }],
@@ -348,7 +353,7 @@ registry.registerPath({
 // Register put room path
 registry.registerPath({
     method: "put",
-    path: "/rooms/{id}",
+    path: "/api/rooms/{id}",
     tags: ["Rooms"],
     summary: "Modify specified room",
     security: [{ bearerAuth: [] }],
@@ -390,7 +395,7 @@ registry.registerPath({
 // Register get members path
 registry.registerPath({
     method: "get",
-    path: "/rooms/{id}/members",
+    path: "/api/rooms/{id}/members",
     tags: ["RoomMembers"],
     summary: "Returns specified room's members",
     security: [{ bearerAuth: [] }],
@@ -430,7 +435,7 @@ registry.registerPath({
 // Register post room member path
 registry.registerPath({
     method: "post",
-    path: "/rooms/{room_id}/members",
+    path: "/api/rooms/{room_id}/members",
     tags: ["RoomMembers"],
     summary: "Add user to room",
     security: [{ bearerAuth: [] }],
@@ -477,7 +482,7 @@ registry.registerPath({
 // Register get room members path
 registry.registerPath({
     method: "get",
-    path: "/rooms/{room_id}/members/{user_id}",
+    path: "/api/rooms/{room_id}/members/{user_id}",
     tags: ["RoomMembers"],
     summary: "Returns specified room member",
     security: [{ bearerAuth: [] }],
@@ -525,7 +530,7 @@ registry.registerPath({
 // Register delete room members path
 registry.registerPath({
     method: "delete",
-    path: "/rooms/{room_id}/members/{user_id}",
+    path: "/api/rooms/{room_id}/members/{user_id}",
     tags: ["RoomMembers"],
     summary: "Remove specified user from specified room",
     security: [{ bearerAuth: [] }],
@@ -568,7 +573,7 @@ registry.registerPath({
 // Register get games path
 registry.registerPath({
     method: "get",
-    path: "/games",
+    path: "/api/games",
     tags: ["Games"],
     summary: "Returns list of games",
     security: [{ bearerAuth: [] }],
@@ -593,7 +598,7 @@ registry.registerPath({
 // Register post game path
 registry.registerPath({
     method: "post",
-    path: "/games",
+    path: "/api/games",
     tags: ["Games"],
     summary: "Create new game",
     security: [{ bearerAuth: [] }],
@@ -630,7 +635,7 @@ registry.registerPath({
 // Register get game path
 registry.registerPath({
     method: "get",
-    path: "/games/{id}",
+    path: "/api/games/{id}",
     tags: ["Games"],
     summary: "Returns specified game",
     security: [{ bearerAuth: [] }],
@@ -670,7 +675,7 @@ registry.registerPath({
 // Register put game path
 registry.registerPath({
     method: "put",
-    path: "/games/{id}",
+    path: "/api/games/{id}",
     tags: ["Games"],
     summary: "Modify specified game",
     security: [{ bearerAuth: [] }],

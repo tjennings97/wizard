@@ -85,22 +85,24 @@ router.get('/:id', authenticate, async (req, res, next) => {
         return res.status(400).json({ error: "invalid id" })
     }
 
-    // non-admin user can only retrieve themselves
-    if (req.user.role != "admin" && req.user.userId != user_id_parsed.data) {
-        return res.status(403).json({ error: "Forbidden" });
+    
+
+    let query = `SELECT id, username, email, role, created, updated
+                FROM users 
+                WHERE id = $1
+                `
+    let qValues = [id_parsed.data]
+
+    // non-admin user can only retrieve id & username of not self
+    if (req.user.role != "admin" && req.user.userId != id_parsed.data) {
+        query = `SELECT id, username
+                FROM users 
+                WHERE id = $1
+                `
     }
 
     try {
-        const result = await pool.query(
-            `
-            SELECT id, username, email, role, created, updated
-            FROM users 
-            WHERE id = $1
-            `,
-            [
-                id_parsed.data
-            ]
-        );
+        const result = await pool.query(query, qValues);
 
         if (result.rowCount === 0) {
             return res.status(404).json({ error: "provided id not found" });

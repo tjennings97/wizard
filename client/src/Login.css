@@ -1,0 +1,76 @@
+body {
+  background: linear-gradient(180deg, #012F67 0%, #025ECD 100%);
+  background-repeat: no-repeat;
+  height: 100vh;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid #BC2C2B;
+  padding: 0.2em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+  vertical-align: top;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.login-page {
+  font-family: 'Germania One';
+  font-style: normal;
+  color: #FCCF51;
+  font-size: 1.5em;
+}
+
+.submit-button {
+  margin-top: 1em;
+  background-color: #EA1C28;
+  font-size: .75em;
+  color: #FCCF51;
+  
+}
+
+.forgot-password {
+  font-size: .75em;
+}
+
+.input-form {
+  margin-bottom: 0em;
+}
