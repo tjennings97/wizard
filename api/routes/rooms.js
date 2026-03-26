@@ -8,7 +8,7 @@ import {
 } from '../schemas/room_schema.js'
 import { user_idSchema } from '../schemas/user_schema.js';
 import { authenticate, requireRole } from '../helpers/auth.js';
-import { addMember } from '../../services/roomService.js';
+import { getRooms, addRoom, getRoom, updateRoom, getMembers, addMember, getMember, removeMember } from '../../services/roomService.js';
 import * as z from "zod";
 
 const ROOM_MAX = 3;
@@ -21,54 +21,18 @@ router.use((req, res, next) => {
 });
 
 router.get('/', authenticate, async (req, res, next) => {
-
     try {
-        const result = await pool.query(
-            `
-            SELECT *
-            FROM rooms 
-            ORDER BY id ASC
-            `
-        );
-
-        if (result.rowCount === 0) {
-            return res.status(404).json({ error: "no rooms found" });
-        }
-
-        return res.status(200).json(result.rows);
+        const rooms = await getRooms();
+        return res.status(200).json(rooms);
     } catch (err) {
         return next(err);
     }
-
-
 });
 
 router.post("/", authenticate, async (req, res, next) => {
-    // TO DO: update queries to be joint instead of two separate queries
     try {
-        const roomCheck = await pool.query(
-            `
-            SELECT *
-            FROM rooms
-            `
-        );
-
-        if (roomCheck.rowCount < ROOM_MAX) {
-            const addRoom = await pool.query(
-                `
-            INSERT INTO rooms (status)
-            VALUES ($1)
-            RETURNING *
-            `,
-                [
-                    'open'
-                ]
-            );
-
-            return res.status(201).json(addRoom.rows[0]);
-        } else {
-            return res.status(400).json({ error: "Room maximum reached" })
-        }
+        const room = await addRoom();
+        return res.status(201).json(room);
     } catch (err) {
         return next(err);
     }
@@ -81,22 +45,8 @@ router.get('/:id', authenticate, async (req, res, next) => {
     }
 
     try {
-        const result = await pool.query(
-            `
-            SELECT *
-            FROM rooms 
-            WHERE id = $1
-            `,
-            [
-                room_id_parsed.data
-            ]
-        )
-
-        if (result.rowCount === 0) {
-            return res.status(404).json({ error: "provided id not found" });
-        }
-
-        res.status(200).json(result.rows[0]);
+        const room = await getRoom(room_id_parsed.data);
+        res.status(200).json(room);
     } catch (err) {
         return next(err);
     }
@@ -115,25 +65,8 @@ router.put('/:id', authenticate, async (req, res, next) => {
     }
 
     try {
-        const updateRoom = await pool.query(
-            `
-            UPDATE rooms 
-            SET status = $1 
-            WHERE id = $2 
-            RETURNING *;
-            `,
-            [
-                body_parsed.data.status,
-                room_id_parsed.data
-            ]
-        );
-
-        if (updateRoom.rowCount === 0) {
-            return res.status(404).json({ error: "provided ID not found" });
-        }
-
+        await updateRoom(room_id_parsed.data, body_parsed.data.status);
         return res.status(204).send();
-
     } catch (err) {
         return next(err);
     }
@@ -146,22 +79,8 @@ router.get('/:id/members', authenticate, async (req, res, next) => {
     }
 
     try {
-        const result = await pool.query(
-            `
-            SELECT room_id, user_id, role, seat_number, created, updated
-            FROM room_members
-            WHERE room_id = $1
-            `,
-            [
-                room_id_parsed.data
-            ]
-        );
-
-        if (result.rowCount === 0) {
-            return res.status(404).json({ error: "no room members found" });
-        }
-
-        return res.status(200).json(result.rows);
+        const members = await getMembers(room_id_parsed.data)
+        return res.status(200).json(members);
     } catch (err) {
         return next(err);
     }
@@ -184,22 +103,11 @@ router.post('/:id/members', authenticate, async (req, res, next) => {
     }
 
     try {
-        const { newMember, started } = await addMember(room_id_parsed.data, body_parsed.data.user_id, body_parsed.data.role, req.io);
+        const { newMember } = await addMember(room_id_parsed.data, body_parsed.data.user_id, body_parsed.data.role, req.io);
         return res.status(201).json(newMember);
     } catch (err) {
-        console.log(err)
-        return res.status(err.status || 500).json({ error: err.message });
+        return next(err);
     }
-    // catch (err) {
-    //     if (err.code === "23503") {
-    //         // invalid room id or user id
-    //         return res.status(400).json({ error: err.detail });
-    //     } else if (err.code === "23505") { 
-    //         // user already exists in room_members table due to index
-    //         return res.status(409).json({ error: "User already exists in a room" });
-    //     }
-    //     return next(err);
-    // }
 });
 
 router.get('/:room_id/members/:user_id', authenticate, async (req, res, next) => {
@@ -218,23 +126,8 @@ router.get('/:room_id/members/:user_id', authenticate, async (req, res, next) =>
     }
 
     try {
-        const result = await pool.query(
-            `
-            SELECT room_id, user_id, role, seat_number, created, updated
-            FROM room_members 
-            WHERE room_id = $1 AND user_id = $2
-            `,
-            [
-                room_id_parsed.data,
-                user_id_parsed.data
-            ]
-        );
-
-        if (result.rowCount === 0) {
-            return res.status(404).json({ error: "no room member found" });
-        }
-
-        return res.status(200).json(result.rows);
+        const member = await getMember(room_id_parsed.data, user_id_parsed.data)
+        return res.status(200).json(member);
     } catch (err) {
         return next(err);
     }
@@ -256,21 +149,7 @@ router.delete('/:room_id/members/:user_id', authenticate, async (req, res, next)
     }
 
     try {
-        const result = await pool.query(
-            `
-            DELETE FROM room_members 
-            WHERE room_id = $1 AND user_id = $2
-            `,
-            [
-                room_id_parsed.data,
-                user_id_parsed.data
-            ]
-        );
-
-        if (result.rowCount === 0) {
-            return res.status(404).json({ error: "no room_members found" });
-        }
-
+        await removeMember(room_id_parsed.data, user_id_parsed.data)
         return res.status(204).send();
     } catch (err) {
         return next(err);
