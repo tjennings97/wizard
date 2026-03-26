@@ -45,7 +45,7 @@ router.post("/", async (req, res) => {
             username: dbUser.username
         }
     }
-    res.json(userResponse).send(200);
+    res.status(200).json(userResponse);
 });
 
 export default router;

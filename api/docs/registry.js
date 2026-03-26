@@ -172,7 +172,7 @@ registry.registerPath({
             },
         },
         400: {
-            description: "client error"
+            description: "Client error"
         },
         409: {
             description: "User already exists"
@@ -214,7 +214,7 @@ registry.registerPath({
             description: "User modified successfully"
         },
         400: {
-            description: "client error"
+            description: "Client error"
         },
         404: {
             description: "provided id not found"
@@ -249,7 +249,7 @@ registry.registerPath({
             description: "User deleted successfully"
         },
         400: {
-            description: "client error"
+            description: "Client error"
         },
         404: {
             description: "provided id not found"
@@ -342,7 +342,7 @@ registry.registerPath({
             description: "invalid id"
         },
         404: {
-            description: "provided id not found"
+            description: "Room not found"
         },
         500: {
             description: "Internal server error"
@@ -381,10 +381,10 @@ registry.registerPath({
             description: "Room modified successfully"
         },
         400: {
-            description: "client error"
+            description: "Client error"
         },
         404: {
-            description: "provided id not found"
+            description: "Room not found"
         },
         500: {
             description: "Internal server error"
@@ -424,7 +424,7 @@ registry.registerPath({
             description: "invalid id"
         },
         404: {
-            description: "no room members found"
+            description: "Room members not found"
         },
         500: {
             description: "Internal server error"
@@ -468,7 +468,10 @@ registry.registerPath({
             },
         },
         400: {
-            description: "client error"
+            description: "Client error"
+        },
+        404: {
+            description: "User not found"
         },
         409: {
             description: "User already exists in a room"
@@ -519,7 +522,7 @@ registry.registerPath({
             description: "invalid id"
         },
         404: {
-            description: "no room member found"
+            description: "Room member not found"
         },
         500: {
             description: "Internal server error"
@@ -562,7 +565,7 @@ registry.registerPath({
             description: "invalid id"
         },
         404: {
-            description: "no room member found"
+            description: "Room member not found"
         },
         500: {
             description: "Internal server error"
@@ -621,7 +624,7 @@ registry.registerPath({
             },
         },
         400: {
-            description: "client error"
+            description: "Client error"
         },
         409: {
             description: "There is already an active game in the room"
@@ -703,7 +706,7 @@ registry.registerPath({
             description: "Game modified successfully"
         },
         400: {
-            description: "client error"
+            description: "Client error"
         },
         404: {
             description: "provided id not found"

@@ -37,7 +37,8 @@ api.use(express.static(path.join(__dirname, "../client/dist")));
 
 api.use((err, req, res, next) => {
   console.error(err);
-  res.status(500).json({ error: "Internal server error" });
+  let errMsg = (err.message || "Internal server error");
+  res.status(err.status || 500).json({ error: errMsg });
 });
 
 // Swagger docs
