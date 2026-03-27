@@ -138,7 +138,7 @@ registry.registerPath({
             description: "invalid id"
         },
         404: {
-            description: "provided id not found"
+            description: "User not found"
         },
         500: {
             description: "Internal server error"

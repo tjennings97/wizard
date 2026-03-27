@@ -45,7 +45,7 @@ export async function getRoom(roomId) {
   let room = null
 
   await withTransaction(async (client) => {
-    const room = await client.query(
+    const result = await client.query(
       `SELECT * FROM rooms WHERE id=$1`,
       [roomId]
     );
@@ -71,7 +71,7 @@ export async function updateRoom(roomId, status) {
         throw { status: 404, message: "Room not found" };
       }
     } catch (err) {
-      throw { status: 500, message: "Something went wrong" };
+      throw { status: err.status || 500, message: (err.message || "Internal server error") };
     }
 
     return;
@@ -160,7 +160,8 @@ export async function addMember(roomId, userId, role, io) {
         // user id not found
         throw { status: 404, message: "User not found" };
       }
-      throw { status: 500, message: "Something went wrong" };
+      throw { status: err.status || 500, message: (err.message || "Internal server error") };
+
     }
 
     // increment seat counter after member added
@@ -229,7 +230,7 @@ export async function removeMember(roomId, userId) {
         throw { status: 404, message: "Room member not found" };
       }
     } catch (err) {
-      throw { status: 500, message: "Something went wrong" };
+      throw { status: err.status || 500, message: (err.message || "Internal server error") };
     }
   })
 

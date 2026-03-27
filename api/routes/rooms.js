@@ -1,6 +1,5 @@
 import express from 'express';
 const router = express.Router();
-import pool from '../db.js'
 import {
     room_idSchema,
     updateRoomSchema,
@@ -8,7 +7,10 @@ import {
 } from '../schemas/room_schema.js'
 import { user_idSchema } from '../schemas/user_schema.js';
 import { authenticate, requireRole } from '../helpers/auth.js';
-import { getRooms, addRoom, getRoom, updateRoom, getMembers, addMember, getMember, removeMember } from '../../services/roomService.js';
+import { 
+    getRooms, addRoom, getRoom, updateRoom, 
+    getMembers, addMember, getMember, removeMember 
+} from '../../services/roomService.js';
 import * as z from "zod";
 
 const ROOM_MAX = 3;

@@ -1,16 +1,16 @@
 import express from 'express';
 const router = express.Router();
-import pool from '../db.js'
 import {
     createUserSchema,
     updateUserSchema,
     userIdSchema,
     user_idSchema
 } from '../schemas/user_schema.js'
-import bcrypt from 'bcrypt';
 import * as z from "zod";
-import updateUserQuery from '../helpers/updateUserQuery.js'
 import { authenticate, requireRole } from '../helpers/auth.js';
+import {
+    getUsers, addUser, getUser, updateUser, removeUser
+} from '../../services/userService.js';
 
 // bcrpyt cost factor
 const saltRounds = 10;
@@ -25,22 +25,11 @@ router.use((req, res, next) => {
 router.get('/', authenticate, requireRole('admin'), async (req, res, next) => {
 
     try {
-        const result = await pool.query(
-            `
-            SELECT id, username, email, role, created, updated
-            FROM users
-            `
-        );
-
-        if (result.rowCount === 0) {
-            return res.status(404).json({ error: "no users found" });
-        }
-
-        return res.status(200).json(result.rows);
-    } catch(err) {
+        const users = await getUsers();
+        return res.status(200).json(users);
+    } catch (err) {
         return next(err);
     }
-    
 
 });
 
@@ -51,30 +40,9 @@ router.post("/", authenticate, requireRole('admin'), async (req, res, next) => {
     }
 
     try {
-        const passwordHash = await bcrypt.hash(parsed.data.password, saltRounds);
-
-        const result = await pool.query(
-            `
-            INSERT INTO users (username, email, password_hash, role)
-            VALUES ($1, $2, $3, $4)
-            RETURNING id, username, email, role, created, updated
-            `,
-            [
-                parsed.data.username,
-                parsed.data.email ?? null,
-                passwordHash,
-                parsed.data.role
-            ]
-        );
-
-        return res.status(201).json(result.rows[0]);
-
+        const user = await addUser(parsed.data.username, parsed.data.email ?? null, parsed.data.password, parsed.data.role)
+        return res.status(201).json(user);
     } catch (err) {
-        // Unique constraint violation
-        if (err.code === "23505") {
-            return res.status(409).json({ error: err.detail });
-        }
-
         return next(err);
     }
 });
@@ -85,34 +53,13 @@ router.get('/:id', authenticate, async (req, res, next) => {
         return res.status(400).json({ error: "invalid id" })
     }
 
-    
-
-    let query = `SELECT id, username, email, role, created, updated
-                FROM users 
-                WHERE id = $1
-                `
-    let qValues = [id_parsed.data]
-
-    // non-admin user can only retrieve id & username of not self
-    if (req.user.role != "admin" && req.user.userId != id_parsed.data) {
-        query = `SELECT id, username
-                FROM users 
-                WHERE id = $1
-                `
-    }
-
     try {
-        const result = await pool.query(query, qValues);
-
-        if (result.rowCount === 0) {
-            return res.status(404).json({ error: "provided id not found" });
-        }
-
-        res.status(200).json(result.rows[0]);
+        const user = await getUser(id_parsed.data, req.user.role, req.user.userId)
+        res.status(200).json(user);
     } catch (err) {
         return next(err);
     }
-        
+
 });
 
 // only email and/or password can be edited according to user schema at this time
@@ -128,20 +75,9 @@ router.put('/:id', authenticate, async (req, res, next) => {
         return res.status(400).json(z.treeifyError(body_parsed.error));
     }
 
-    // // non-admin user can only modify email & password themselves
-    // if (req.user.role != "admin" && req.user.userId != user_id_parsed.data) {
-    // }
-
-    try {
-        const queryData = await updateUserQuery(id_parsed.data.id, body_parsed.data);
-        const result = await pool.query(queryData[0], queryData[1]);
-        
-        if (result.rowCount === 0) {
-            return res.status(404).json({ error: "provided ID not found" });
-        }
-        
+    try {        
+        await updateUser(id_parsed.data.id, body_parsed.data, req.user.role, req.user.userId)
         return res.status(204).send();
-
     } catch (err) {
         return next(err);
     }
@@ -153,24 +89,9 @@ router.delete('/:id', authenticate, requireRole('admin'), async (req, res, next)
         return res.status(400).json({ error: "invalid id" })
     }
 
-    // attempt to insert data into DB
     try {
-        const result = await pool.query(
-            `
-            DELETE FROM users 
-            WHERE id = $1
-            `,
-            [
-                id_parsed.data.id
-            ]
-        );
-
-        if (result.rowCount === 0) {
-            return res.status(404).json({ error: "provided id not found" });
-        }
-
+        await removeUser(id_parsed.data.id)
         res.status(204).send();
-
     } catch (err) {
         return next(err);
     }
