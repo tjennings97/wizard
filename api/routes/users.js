@@ -1,6 +1,5 @@
 import express from 'express';
 const router = express.Router();
-import pool from '../db.js'
 import {
     createUserSchema,
     updateUserSchema,
@@ -8,7 +7,6 @@ import {
     user_idSchema
 } from '../schemas/user_schema.js'
 import * as z from "zod";
-import updateUserQuery from '../helpers/updateUserQuery.js'
 import { authenticate, requireRole } from '../helpers/auth.js';
 import {
     getUsers, addUser, getUser, updateUser, removeUser
