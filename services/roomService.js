@@ -28,11 +28,15 @@ export async function addRoom() {
     const roomCount = countRes.rows[0].room_count;
 
     if (roomCount < ROOM_MAX) {
-      const addRoom = await client.query(
-        `INSERT INTO rooms (status) VALUES ($1) RETURNING *`,
-        ['open']
-      );
-      room = addRoom.rows[0];
+      try {
+        const addRoom = await client.query(
+          `INSERT INTO rooms (status) VALUES ($1) RETURNING *`,
+          ['open']
+        );
+        room = addRoom.rows[0];
+      } catch (err) {
+        throw { status: (err.status || 500), message: (err.message || "Internal server error") };
+      }
     } else {
       throw { status: 400, message: "Room maximum reached" }
     }
@@ -61,7 +65,6 @@ export async function getRoom(roomId) {
 export async function updateRoom(roomId, status) {
 
   await withTransaction(async (client) => {
-
     try {
       const roomRes = await client.query(
         `UPDATE rooms SET status = $1 WHERE id = $2 RETURNING *;`,
@@ -71,11 +74,10 @@ export async function updateRoom(roomId, status) {
         throw { status: 404, message: "Room not found" };
       }
     } catch (err) {
-      throw { status: err.status || 500, message: (err.message || "Internal server error") };
+      throw { status: (err.status || 500), message: (err.message || "Internal server error") };
     }
-
-    return;
   })
+  return;
 }
 
 export async function getMembers(roomId) {
@@ -160,7 +162,7 @@ export async function addMember(roomId, userId, role, io) {
         // user id not found
         throw { status: 404, message: "User not found" };
       }
-      throw { status: err.status || 500, message: (err.message || "Internal server error") };
+      throw { status: (err.status || 500), message: (err.message || "Internal server error") };
 
     }
 
@@ -230,7 +232,7 @@ export async function removeMember(roomId, userId) {
         throw { status: 404, message: "Room member not found" };
       }
     } catch (err) {
-      throw { status: err.status || 500, message: (err.message || "Internal server error") };
+      throw { status: (err.status || 500), message: (err.message || "Internal server error") };
     }
   })
 
