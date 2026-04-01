@@ -216,6 +216,9 @@ registry.registerPath({
         400: {
             description: "Client error"
         },
+        403: {
+            description: "Forbidden"
+        },
         404: {
             description: "provided id not found"
         },
@@ -590,7 +593,7 @@ registry.registerPath({
             },
         },
         404: {
-            description: "no games found"
+            description: "No games found"
         },
         500: {
             description: "Internal server error"
@@ -625,6 +628,9 @@ registry.registerPath({
         },
         400: {
             description: "Client error"
+        },
+        404: {
+            description: "Game not found"
         },
         409: {
             description: "There is already an active game in the room"
