@@ -59,7 +59,7 @@ export async function getRoom(roomId) {
     throw { status: 404, message: "Room not found" };
   }
 
-  return room.rows;
+  return room.rows[0];
 }
 
 export async function updateRoom(roomId, status) {
@@ -215,7 +215,7 @@ export async function getMember(roomId, userId) {
     throw { status: 404, message: "Room member not found" };
   }
 
-  return member.rows;
+  return member.rows[0];
 }
 
 export async function removeMember(roomId, userId) {
@@ -227,11 +227,27 @@ export async function removeMember(roomId, userId) {
         `DELETE FROM room_members WHERE room_id = $1 AND user_id = $2`,
         [roomId, userId]
       );
-      member;
+
       if (member.rowCount === 0) {
         throw { status: 404, message: "Room member not found" };
       }
+
+      const memberCheck = await client.query(
+        `SELECT room_id from room_members where room_id = $1`,
+        [roomId]
+      )
+
+      if (memberCheck.rowCount === 0) {
+        const openRoom = await client.query(
+          `UPDATE rooms SET status = 'open' WHERE id = $1`,
+          [roomId]
+        );
+        if (openRoom.rowCount === 0) {
+          throw { status: 500, message: "Empty room not updated" };
+        }
+      }
     } catch (err) {
+      console.log(err);
       throw { status: (err.status || 500), message: (err.message || "Internal server error") };
     }
   })
