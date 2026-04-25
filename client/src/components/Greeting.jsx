@@ -1,17 +1,16 @@
-import { useState } from "react";
+import { useAuth } from "../contexts/AuthContext";
 
 function Greeting() {
+    const { user } = useAuth();
 
-    // get name
-    const [name, setName] = useState(null);
-    if (name === null) {
-        setName("user")
-        console.log("null name")
-    }
+    // If user exists, use their name, otherwise default to "Guest" or "User"
+    const displayName = user ? user.username : "Guest";
 
-    return <div className="greeting">
-        Welcome, {name}!
-    </div>
+    return (
+        <div className="greeting">
+            Welcome, {displayName}!
+        </div>
+    );
 }
 
 export default Greeting;

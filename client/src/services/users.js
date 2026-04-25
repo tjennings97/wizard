@@ -1,5 +1,5 @@
 let toke = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ3LCJ1c2VybmFtZSI6InRhbWFyYSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc3NjkwNzAyMiwiZXhwIjoxNzc2OTE0MjIyfQ.Kuo69_3DA27p11AJmktXa-ik-1bSE6L96IMK0RAP4V4";
-toke = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ3LCJ1c2VybmFtZSI6InRhbWFyYSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc3Njk3MjI5NiwiZXhwIjoxNzc2OTc5NDk2fQ.sFHAzWySQeJ67Jnc39lEmCtp-AqAy1mv786Rad1q3FA";
+toke = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ3LCJ1c2VybmFtZSI6InRhbWFyYSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc3NzA1Njg4NiwiZXhwIjoxNzc3MDY0MDg2fQ.PybgtfEsksSDB1NciZgZCxSKxqIHlSdYMRmaLHlRmDE";
 
 export async function userLogin(username, password) {
     let req = {
@@ -28,7 +28,7 @@ export async function fetchUserById(id, token) {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${toke}`,
+            Authorization: `Bearer ${token}`,
         }
     });
     const data = await response.json();

@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import { fetchRooms } from "../services/rooms";
 import RoomItem from "../components/RoomItem";
 import { useRoomContext } from "../contexts/RoomContext";
+import { useAuth } from "../contexts/AuthContext"; 
 
 function Lobby() {
 
     const {rooms, setRooms} = useRoomContext();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
+    const { token } = useAuth();
 
     //get rooms
     useEffect(() => {
@@ -18,7 +20,7 @@ function Lobby() {
 
         const loadRooms = async () => {
             try {
-                const data = await fetchRooms();
+                const data = await fetchRooms(token);
                 if(data.error !== undefined) {
                     throw { error: data.error}
                 }

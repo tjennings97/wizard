@@ -1,65 +1,97 @@
 import { fetchRoomMembers } from "../services/rooms";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import UserItem from "./UserItem";
+import { useAuth } from "../contexts/AuthContext";
+import { JoinRoomButton, LeaveRoomButton } from "./Buttons";
 
-function RoomPregame({id}) {
+function RoomPregame({ id }) {
     const [players, setPlayers] = useState([]);
     const [spectators, setSpectators] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(false);
-    const [errorMsg, setErrorMsg] = useState({})
+    const [errorMsg, setErrorMsg] = useState("");
+    const { user, token } = useAuth();
+    const [join, setJoin] = useState(false);
 
-    //get room members
+    // Use callback so it can be safely used in useEffect
+    const loadRoomMembers = useCallback(async () => {
+        try {
+            const data = await fetchRoomMembers(id, token);
+
+            if (data.error) throw new Error(data.error);
+
+            const playerList = data.filter(m => m.role === "player");
+            const spectatorList = data.filter(m => m.role === "spectator");
+
+            setPlayers(playerList);
+            setSpectators(spectatorList);
+
+            // Check if current user is already in the room
+            const isUserInRoom = data.some(m => m.user_id === user?.id);
+            setJoin(isUserInRoom);
+            setErrorMsg(""); // Clear errors on success
+        } catch (err) {
+            console.error(err);
+            setErrorMsg(err.message || "Failed to load room members.");
+        } finally {
+            setLoading(false);
+        }
+    }, [id, token, user?.id]);
+
     useEffect(() => {
-
-        const loadRoomMembers = async () => {
-            try {
-                const data = await fetchRoomMembers(id);
-                if (data.error !== undefined) {
-                    throw { error: data.error }
-                }
-                setPlayers(data.length > 0 ? data.filter(member => member.role === "player") : []);
-                setSpectators(data.length > 0 ? data.filter(member => member.role === "spectator") : []);
-            } catch (err) {
-                console.log(err);
-                setError(true)
-                setErrorMsg(err)
-            } finally {
-                setLoading(false);
-            }
-        };
-
         loadRoomMembers();
-    }, []);
+    }, [loadRoomMembers]);
 
-    return <div className="room-pregame-details">
-        {loading ? (
-            <div className="loading">Loading...</div>
-        ) : (error ? 
-            (errorMsg.error === "Room members not found" ? (
-                <div className="error">No users in this room.</div>
-            ) : (
-                <div className="error">There was an error.</div>
-            )
-        ) : (
+    const postJoin = (success, message) => {
+        if (success) {
+            loadRoomMembers();
+        } else {
+            setErrorMsg(message);
+        }
+    };
+
+    const postLeave = (success, message) => {
+        if (success) {
+            setJoin(false);
+            loadRoomMembers();
+        } else {
+            setErrorMsg(message);
+        }
+    };
+
+    if (loading) return <div className="loading">Loading room details...</div>;
+
+    return (
+        <div className="room-pregame-details">
+            {errorMsg && <div className="error-message">{errorMsg}</div>}
+
             <div className="room-pregame-details-list">
-                Players
-                <ul>
-                    {players.map((player) => (
-                        <UserItem id={player.user_id} key={player.user_id} />
-                    ))}
-                </ul>
-                Spectators
-                <ul>
-                    {spectators.map((spectator) => (
-                        <UserItem id={spectator.user_id} key={spectator.user_id} />
-                    ))}
-                </ul>
+                <h3>Players</h3>
+                {players.length > 0 ? (
+                    <ul>
+                        {players.map(p => <UserItem id={p.user_id} key={p.user_id} />)}
+                    </ul>
+                ) : <p>No players yet.</p>}
+
+                <h3>Spectators</h3>
+                {spectators.length > 0 ? (
+                    <ul>
+                        {spectators.map(s => <UserItem id={s.user_id} key={s.user_id} />)}
+                    </ul>
+                ) : <p>No spectators yet.</p>}
             </div>
-        ))}
-    </div>
 
-
+            <div className="room-controls">
+                {!join ? (
+                    <>
+                        <JoinRoomButton role="player" roomId={id} onJoin={postJoin} />
+                        <JoinRoomButton role="spectator" roomId={id} onJoin={postJoin} />
+                    </>
+                ) : (
+                    <LeaveRoomButton roomId={id} onLeave={postLeave} />
+                )}
+            </div>
+        </div>
+    );
 }
 
-export default RoomPregame
+export default RoomPregame;

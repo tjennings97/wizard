@@ -3,12 +3,14 @@ import { useEffect, useState } from "react";
 import { useRoomContext } from "../contexts/RoomContext";
 import { fetchRoomById } from "../services/rooms";
 import RoomPregame from "../components/RoomPregame";
+import { useAuth } from "../contexts/AuthContext";
 
 function Room() {
     const { id } = useParams();
     const { getRoomById, addRoomToContext } = useRoomContext();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
+    const { token } = useAuth();
 
     // Look for the specific room in our global context array
     const roomInfo = getRoomById(id)
@@ -19,7 +21,7 @@ function Room() {
             const loadRoom = async () => {
                 setLoading(true);
                 try {
-                    const data = await fetchRoomById(id);
+                    const data = await fetchRoomById(id, token);
                     if (data.error !== undefined) {
                         throw { error: data.error }
                     }
@@ -51,13 +53,6 @@ function Room() {
         <div>
             <RoomPregame id={id} />
         </div>
-        {/* Additional room-specific logic here 
-    //         room member details
-    //         join as player
-    //         join as spectator
-    //         logic to show buttons only on certain states
-            
-    //         */}
     </div>
 }
 
