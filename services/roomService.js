@@ -175,7 +175,7 @@ export async function addMember(roomId, userId, role, io) {
         `UPDATE rooms SET status = 'waiting' WHERE id = $1`,
         [roomId]
       );
-      started = true;
+      // started = true;
     }
 
     // Auto-start game if 8 players

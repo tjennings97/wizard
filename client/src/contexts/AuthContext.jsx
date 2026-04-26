@@ -64,7 +64,7 @@ export const AuthProvider = ({ children }) => { // Added the "=" here
             localStorage.removeItem("gameRole");
             setGameRole(null);
         }
-        
+
     };
 
     const checkCurrentToken = () => {

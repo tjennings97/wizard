@@ -16,7 +16,13 @@ export const RoomProvider = ({ children }) => {
     // Helper to add a single room (used by the Room page on refresh)
     const addRoomToContext = (newRoom) => {
         setRooms((prev) => {
-            if (prev.find(r => r.id === newRoom.id)) return prev;
+            const roomExists = prev.find(r => r.id === newRoom.id);
+
+            if (roomExists) {
+                // Update the existing room in the list with fresh data
+                return prev.map((r) => (r.id === newRoom.id ? newRoom : r));
+            }
+            // If it doesn't exist, append it
             return [...prev, newRoom];
         });
     };

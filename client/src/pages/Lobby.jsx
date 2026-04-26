@@ -11,12 +11,11 @@ function Lobby() {
     const [error, setError] = useState(false);
     const { token } = useAuth();
 
-    //get rooms
     useEffect(() => {
-        if (rooms.length === 3) {
-            setLoading(false); // Skip fetch if we already have them!
-            return;
-        }
+        // if (rooms.length === 3) {
+        //     setLoading(false); // Skip fetch if we already have them!
+        //     return;
+        // }
 
         const loadRooms = async () => {
             try {

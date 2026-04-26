@@ -1,4 +1,5 @@
 import { addMemberToRoom, removeMemberFromRoom } from "../services/rooms";
+import { startGame } from "../services/games";
 import { useAuth } from "../contexts/AuthContext";
 
 export function JoinRoomButton({ role, roomId, onJoin }) {
@@ -29,7 +30,6 @@ export function LeaveRoomButton({ roomId, onLeave }) {
     async function removeMember() {
         try {
             const data = await removeMemberFromRoom(roomId, user.id, token);
-            // 204 is 'No Content', usually meaning success for DELETE
             if (data.status === 204) {
                 gameRoleChange(null); // Explicitly clear the role
                 onLeave(true, "Room left successfully!"); // true here means "Success"
@@ -43,4 +43,24 @@ export function LeaveRoomButton({ roomId, onLeave }) {
     }
 
     return <button onClick={removeMember}>Leave Room</button>;
+}
+
+export function StartGameButton({ roomId, onStart }) {
+    const { token } = useAuth();
+
+    async function startTheGame() {
+        try {
+            const data = await startGame(roomId, token);
+            if (data.status === 201) {
+                onStart(true, "Game started successfully");
+            } else {
+                throw new Error("Failed to start game.")
+            }
+        } catch (err) {
+            onStart(false, err.message || "Game not started")
+            console.log(err)
+        }
+    }
+
+    return <button onClick={startTheGame}>Start Game</button>
 }

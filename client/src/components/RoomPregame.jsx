@@ -2,14 +2,14 @@ import { fetchRoomMembers } from "../services/rooms";
 import { useState, useEffect, useCallback } from "react";
 import UserItem from "./UserItem";
 import { useAuth } from "../contexts/AuthContext";
-import { JoinRoomButton, LeaveRoomButton } from "./Buttons";
+import { JoinRoomButton, LeaveRoomButton, StartGameButton } from "./Buttons";
 
-function RoomPregame({ id }) {
+function RoomPregame({ id, roomStatus, loadRoomDetails }) {
     const [players, setPlayers] = useState([]);
     const [spectators, setSpectators] = useState([]);
     const [loading, setLoading] = useState(true);
     const [errorMsg, setErrorMsg] = useState("");
-    const { user, token } = useAuth();
+    const { user, token, gameRole } = useAuth();
     const [join, setJoin] = useState(false);
 
     // Use callback so it can be safely used in useEffect
@@ -17,8 +17,11 @@ function RoomPregame({ id }) {
         try {
             const data = await fetchRoomMembers(id, token);
 
-            if (data.error) throw new Error(data.error);
-
+            if (data.error) {
+                setPlayers([]);
+                setSpectators([])
+                throw new Error(data.error);
+            }
             const playerList = data.filter(m => m.role === "player");
             const spectatorList = data.filter(m => m.role === "spectator");
 
@@ -44,6 +47,7 @@ function RoomPregame({ id }) {
     const postJoin = (success, message) => {
         if (success) {
             loadRoomMembers();
+            loadRoomDetails();
         } else {
             setErrorMsg(message);
         }
@@ -53,10 +57,21 @@ function RoomPregame({ id }) {
         if (success) {
             setJoin(false);
             loadRoomMembers();
+            loadRoomDetails();
         } else {
             setErrorMsg(message);
         }
     };
+
+    const postStart = (success, message) => {
+        if(success) {
+            console.log("started")
+            loadRoomMembers();
+            loadRoomDetails();
+        } else {
+            setErrorMsg(message)
+        }
+    }
 
     if (loading) return <div className="loading">Loading room details...</div>;
 
@@ -83,11 +98,14 @@ function RoomPregame({ id }) {
             <div className="room-controls">
                 {!join ? (
                     <>
-                        <JoinRoomButton role="player" roomId={id} onJoin={postJoin} />
+                        {(roomStatus === "open" || roomStatus === "waiting") && <JoinRoomButton role="player" roomId={id} onJoin={postJoin} />}
                         <JoinRoomButton role="spectator" roomId={id} onJoin={postJoin} />
                     </>
                 ) : (
-                    <LeaveRoomButton roomId={id} onLeave={postLeave} />
+                    <>
+                        {(gameRole === "player" && roomStatus === "waiting") && <StartGameButton roomId={id} onStart={postStart}/>}
+                        <LeaveRoomButton roomId={id} onLeave={postLeave} />
+                    </>
                 )}
             </div>
         </div>

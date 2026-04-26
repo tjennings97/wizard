@@ -14,28 +14,32 @@ function Room() {
 
     // Look for the specific room in our global context array
     const roomInfo = getRoomById(id)
+    const [start, setStart] = useState(false);
+
+    const loadRoom = async () => {
+        setLoading(true);
+        try {
+            const data = await fetchRoomById(id, token);
+            if (data.error !== undefined) {
+                throw { error: data.error }
+            }
+            addRoomToContext(data); // Add it to context so it's there for next time
+            setStart(data.status)
+        } catch (err) {
+            console.error(err);
+            setError(true)
+            setLoading(false)
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
         // If we don't have the room (e.g. user refreshed the page)
         if (!roomInfo) {
-            const loadRoom = async () => {
-                setLoading(true);
-                try {
-                    const data = await fetchRoomById(id, token);
-                    if (data.error !== undefined) {
-                        throw { error: data.error }
-                    }
-                    addRoomToContext(data); // Add it to context so it's there for next time
-                } catch (err) {
-                    console.error(err);
-                    setError(true)
-                    setLoading(false)
-                } finally {
-                    setLoading(false);
-                }
-            };
             loadRoom();
         } else {
+            setStart(roomInfo.status)
             setLoading(false)
         }
     }, [id, roomInfo, addRoomToContext]);
@@ -50,9 +54,13 @@ function Room() {
                 {roomInfo.id}: {roomInfo.status}
             </div>
         ))}
-        <div>
-            <RoomPregame id={id} />
-        </div>
+        {(start === "open" || start === "waiting") ? (
+            <div>
+                <RoomPregame id={id} roomStatus={roomInfo.status} loadRoomDetails={loadRoom} />
+            </div>) : ((start === "playing") ?
+                (<p>Game is started.</p>) :
+                (<p>Room is busy.</p>)
+        )}
     </div>
 }
 
