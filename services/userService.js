@@ -69,7 +69,7 @@ export async function getUser(userId, reqRole, reqId) {
         throw { status: 404, message: "User not found" };
     }
 
-    return user.rows;
+    return user.rows[0];
 }
 
 export async function updateUser(userId, data, reqRole, reqId) {

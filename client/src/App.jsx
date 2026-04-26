@@ -147,7 +147,7 @@ function JoinRoomButton({ role, roomId }) {
   role = role.toLowerCase()
 
   async function addMemberToRoom() {
-    console.log(`type of ${user.id} ${typeof(user.id)}`)
+    console.log(`type of ${user.id} ${typeof (user.id)}`)
     try {
       const response = await fetch(`/api/rooms/${roomId}/members`, {
         headers: {
@@ -255,23 +255,25 @@ function StartGameButton({ roomId }) {
   async function startGame() {
 
     try {
-      // roomId = Number(roomId)
-      const response = await fetch(`/api/games`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ room_id: roomId, status: "active" }),
-        method: "POST"
-      });
-      if (response.status === 201) {
-        console.log(response.body)
-        console.log(`sending start_game event roomId: ${roomId}, username: ${user.username}`);
-        socket.emit("game_start", [roomId, user.username]);
-      } else {
-        console.log(response)
-        throw new Error("game not started")
-      }
+      // // roomId = Number(roomId)
+      // const response = await fetch(`/api/games`, {
+      //   headers: {
+      //     "Content-Type": "application/json",
+      //     Authorization: `Bearer ${token}`,
+      //   },
+      //   body: JSON.stringify({ room_id: roomId, status: "active" }),
+      //   method: "POST"
+      // });
+      // if (response.status === 201) {
+      //   console.log(response.body)
+      //   console.log(`sending start_game event roomId: ${roomId}, username: ${user.username}`);
+      //   socket.emit("game_start", [roomId, user.username]);
+      // } else {
+      //   console.log(response)
+      //   throw new Error("game not started")
+      // }
+      console.log(`sending start_game event roomId: ${roomId}, username: ${user.username}`);
+      socket.emit("game_start", [roomId, user.username]);
       // navigate(`/lobby`);
     } catch (e) {
       console.log(e);
@@ -286,12 +288,17 @@ function StartGameButton({ roomId }) {
 
 function Room() {
   const { token } = useAuth();
-  const [room, setRoom] = useState([]);
+  const [room, setRoom] = useState(null);
   const [roomMembers, setRoomMembers] = useState([]);
   const [roomPlayers, setRoomPlayers] = useState([]);
   const [roomSpectators, setRoomSpectators] = useState([]);
+  const [members, setMembers] = useState([])
 
   const { id } = useParams();
+
+  if (!room) {
+    return <p>Loading room...</p>;
+  }
 
   async function fetchRoom() {
     try {
@@ -353,7 +360,6 @@ function Room() {
     };
   }, []);
 
-  // why am i clicking one button but it's like both??
   return (
     <div>
       <h1>Room {id}</h1>
@@ -393,6 +399,7 @@ function Game() {
   const [room, setRoom] = useState([]);
   const [roomPlayers, setRoomPlayers] = useState([]);
   const [roomSpectators, setRoomSpectators] = useState([]);
+  const [game, setGame] = useState([]);
 
   async function fetchRoom() {
     try {
@@ -454,6 +461,17 @@ function Game() {
     }
   }
 
+  async function gameDetails(msg) {
+    try {
+      console.log(msg)
+      setGame(msg)
+      console.log(game)
+    } catch (e) {
+      console.log(e)
+    }
+    console.log("in game details")
+  }
+
   useEffect(() => {
     fetchRoom();
   }, []); // empty dependency array = run only once when component mounts
@@ -466,12 +484,19 @@ function Game() {
       fetchRoomMembers();
     };
 
+    const handleGameStart = (msg) => {
+      console.log("in handle game start")
+      gameDetails(msg);
+    };
+
     socket.on("userJoined", handleRoomChange);
     socket.on("userLeft", handleRoomChange);
+    socket.on("gameStarted", handleGameStart);
 
     return () => {
       socket.off("userJoined", handleRoomChange);
       socket.off("userLeft", handleRoomChange);
+      socket.off("gameStarted", handleGameStart);
     };
   }, []);
 

@@ -27,6 +27,11 @@ export async function addGame(roomId, status) {
             );
             game = result;
 
+            const room = await client.query(
+                `UPDATE rooms SET status = 'playing' WHERE id = $1`,
+                [roomId]
+            );
+
         } catch (err) {
             if (err.code === "23505") {
                 throw { status: 409, message: "There is already an active game in the room" }
@@ -56,7 +61,7 @@ export async function getGame(gameId) {
         throw { status: 404, message: "Game not found" };
     }
 
-    return game.rows;
+    return game.rows[0];
 }
 
 export async function updateGame(gameId, data) {
